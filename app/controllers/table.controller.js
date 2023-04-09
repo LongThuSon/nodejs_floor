@@ -4,8 +4,8 @@ const Table = db.tables;
 // Create and Save a new Table
 exports.create = (req, res) => {
     // Validate request
-    if (!req.body.type) {
-        res.status(400).send({ message: "Type table can not be empty!" });
+    if (!req.body.type || !req.body.number) {
+        res.status(400).send({ message: "Content table can not be empty!" });
         return;
     }
 
@@ -14,7 +14,8 @@ exports.create = (req, res) => {
         number: req.body.number,
         type: req.body.type,
         topPositon: req.body.topPositon,
-        leftPositon: req.body.leftPositon
+        leftPositon: req.body.leftPositon,
+        keyRestaurant: req.body.keyRestaurant
     });
 
     // Save Table in the database
@@ -126,11 +127,27 @@ exports.deleteAll = (req, res) => {
         });
 };
 
-// Find all published Tables
+// Find all type Tables
 exports.findAllType = (req, res) => {
-    const type = req.params.type;
+    const type = req.query.type;
 
     Table.find({ type: type })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving Tables."
+            });
+        });
+};
+
+// Find all key restaurant Tables
+exports.findAllKey = (req, res) => {
+    const keyRestaurant = req.query.keyRestaurant;
+
+    Table.find({ keyRestaurant: keyRestaurant })
         .then(data => {
             res.send(data);
         })

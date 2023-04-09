@@ -6,11 +6,11 @@ module.exports = app => {
     // Create a new customer
     router.post("/", customers.create);
 
-    // Retrieve all customers
-    router.get("/", customers.findAll);
+    // Retrieve all history customers
+    router.get("/history", customers.findAllHistory);
 
-    // Retrieve all published customers
-    router.get("/published", customers.findAllHistory);
+    // Retrieve all service customers
+    router.get("/service", customers.findAllService);
 
     // Retrieve a single customer with id
     router.get("/:id", customers.findOne);
@@ -18,11 +18,8 @@ module.exports = app => {
     // Update a customer with id
     router.put("/:id", customers.update);
 
-    // Delete a customer with id
-    router.delete("/:id", customers.delete);
-
-    // Delete all customers
-    router.delete("/", customers.deleteAll);
+    // Retrieve all customers
+    router.get("/", customers.findAll);
 
     app.use('/api/customers', router);
 };

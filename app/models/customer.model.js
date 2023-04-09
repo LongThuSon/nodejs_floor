@@ -6,13 +6,17 @@ module.exports = mongoose => {
                 name: String,
                 quantityBook: Number,
                 idTable: { type: String, default: "" },
-                phone: Number,
+                phone: String,
                 status: { type: Number, default: 0 },
-                dateOrder: Date,
+                dateOrder: { type: Number, default: Date.now() },
                 typeService: Number,
-                timeOrder: Number,
+                timeOrder: String,
                 isHold: { type: Boolean, default: false },
-                note: { type: String, default: "" }
+                note: { type: String, default: "" },
+                keyRestaurant: String,
+                state: { type: Number, default: 0 },
+                statusTable: { type: Number, default: -1 },
+                percent: { type: Number, default: 0 },
             },
             { timestamps: true }
         )

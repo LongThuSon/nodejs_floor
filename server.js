@@ -3,14 +3,15 @@ const cors = require("cors");
 
 const app = express();
 
+const server = require('http').Server(app);
+
 const tableRoute = require("./app/routes/table.routes.js");
 const customerRoute = require("./app/routes/customer.routes.js");
+const userRoute = require("./app/routes/user.routes.js");
 
-var corsOptions = {
-    origin: "http://localhost:8081"
-};
+const socketio = require("./socketio.js");
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 
 tableRoute(app);
 customerRoute(app);
+userRoute(app);
 
 const db = require("./app/models");
 db.mongoose
@@ -40,8 +42,16 @@ db.mongoose
         process.exit();
     });
 
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "*",
+    }
+});
+
+socketio.startListener(io);
+
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });

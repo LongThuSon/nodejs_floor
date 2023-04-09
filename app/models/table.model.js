@@ -3,13 +3,14 @@ module.exports = mongoose => {
         "tables",
         mongoose.Schema(
             {
-                number: { type: Number, default: 0 },
-                type: Number,
-                status: { type: Number, default: 0 },
-                seatChair: { type: Number, default: 0 },
-                idCustomer: { type: String, default: "" },
+                number: Number,
+                type: String,
+                totalChair: Number,
+                idCustomer: String,
+                isBlock: Boolean,
                 topPositon: { type: Number, default: 0 },
-                leftPositon: { type: Number, default: 0 }
+                leftPositon: { type: Number, default: 0 },
+                keyRestaurant: String,
             },
             { timestamps: true }
         )

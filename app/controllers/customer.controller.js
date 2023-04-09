@@ -2,10 +2,10 @@ const db = require("../models");
 const Customer = db.customers;
 
 // Create and Save a new Customer
-exports.create = (req, res) => {
+exports.create = (req, res, socketIo) => {
     // Validate request
-    if (!req.body.name || !req.body.quantityBook || !req.body.phone ||
-        !req.body.dateOrder || !req.body.typeService || !req.body.timeOrder) {
+    if (!req.body.name || !req.body.quantityBook || !req.body.phone 
+        || !req.body.typeService || !req.body.timeOrder || !req.body.keyRestaurant) {
         res.status(400).send({ message: "Content can not be empty!" });
         return;
     }
@@ -18,7 +18,8 @@ exports.create = (req, res) => {
         dateOrder: req.body.dateOrder,
         typeService: req.body.typeService,
         timeOrder: req.body.timeOrder,
-        note: req.body.timeOrder
+        note: req.body.note,
+        keyRestaurant: req.body.keyRestaurant
     });
 
     // Save Customer in the database
@@ -130,11 +131,29 @@ exports.deleteAll = (req, res) => {
         });
 };
 
-// Find all published Customers
+// Find all history Customers
 exports.findAllHistory = (req, res) => {
     const phone = req.params.phone;
 
     Customer.find({ phone: phone })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving Customers."
+            });
+        });
+};
+
+// Find all key restaurant Customers
+exports.findAllService = (req, res) => {
+    const keyRestaurant = req.query.keyRestaurant;
+    const typeService = req.query.typeService;
+    const dateOrder = req.query.dateOrder;
+
+    Customer.find({ keyRestaurant: keyRestaurant, typeService: typeService, dateOrder: dateOrder })
         .then(data => {
             res.send(data);
         })
