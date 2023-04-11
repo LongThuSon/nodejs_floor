@@ -1,14 +1,15 @@
 const db = require("../models");
+const { startOfDay, endOfDay } = require("date-fns");
 const Customer = db.customers;
 
 // Create and Save a new Customer
 exports.create = (req, res, socketIo) => {
     // Validate request
-    if (!req.body.name || !req.body.quantityBook || !req.body.phone 
-        || !req.body.typeService || !req.body.timeOrder || !req.body.keyRestaurant) {
-        res.status(400).send({ message: "Content can not be empty!" });
-        return;
-    }
+    // if (!req.body.name || !req.body.quantityBook || !req.body.phone 
+    //     || !req.body.typeService || !req.body.timeOrder || !req.body.keyRestaurant) {
+    //     res.status(400).send({ message: "Content can not be empty!" });
+    //     return;
+    // }
 
     // Create a Customer
     const customer = new Customer({
@@ -152,10 +153,22 @@ exports.findAllService = (req, res) => {
     const keyRestaurant = req.query.keyRestaurant;
     const typeService = req.query.typeService;
     const dateOrder = req.query.dateOrder;
+    
+    const date = new Date(Number(dateOrder));
+    const startTime = date.setUTCHours(0,0,0,0);
+    const endTime = date.setUTCHours(23,59,59,999);
 
-    Customer.find({ keyRestaurant: keyRestaurant, typeService: typeService, dateOrder: dateOrder })
+    Customer.find({ 
+        keyRestaurant: keyRestaurant, 
+        typeService: typeService, 
+        dateOrder: { 
+            $gte: startTime,
+            $lte: endTime 
+        } 
+    })
         .then(data => {
             res.send(data);
+            console.log(dateOrder)
         })
         .catch(err => {
             res.status(500).send({

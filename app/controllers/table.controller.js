@@ -4,10 +4,10 @@ const Table = db.tables;
 // Create and Save a new Table
 exports.create = (req, res) => {
     // Validate request
-    if (!req.body.type || !req.body.number) {
-        res.status(400).send({ message: "Content table can not be empty!" });
-        return;
-    }
+    // if (!req.body.type || !req.body.number) {
+    //     res.status(400).send({ message: "Content table can not be empty!" });
+    //     return;
+    // }
 
     // Create a Table
     const table = new Table({

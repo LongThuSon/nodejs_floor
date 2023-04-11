@@ -48,7 +48,7 @@ const io = require("socket.io")(server, {
     }
 });
 
-socketio.startListener(io);
+socketio(io);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

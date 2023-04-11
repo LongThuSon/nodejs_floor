@@ -1,7 +1,8 @@
-const User = require("./models/user");
+const db = require("./app/models");
+const User = db.users;
 const _ = require("underscore");
 
-exports.startListener = io => {
+module.exports = io => {
     // Delete socket to the namespace, befor authentication
     _.each(io.nsps, function (nsp) {
         nsp.on("connect", function (socket) {
@@ -14,15 +15,18 @@ exports.startListener = io => {
 
     io.on("connection", (socket) => {
         socket.auth = false;
-        socket.on("authenticate", async (auth) => {
-            const { username, password } = auth;
+        socket.on("authenticate", async auth => {
+            const { phone, password, keyRestaurant } = auth;
             // Find user
-            const user = await User.findOne({ username }).exec();
+            const user = await User.findOne({ phone: phone }).exec();
             if (user === null) {
+                console.log(`authenticate: user === null: phone: ${phone}`);
                 socket.emit("error", { message: "No user found" });
             } else if (user.password !== password) {
+                console.log("authenticate: Wrong password");
                 socket.emit("error", { message: "Wrong password" });
             } else {
+                console.log("authenticate: true");
                 socket.auth = true;
                 socket.user = user;
             }
@@ -42,56 +46,21 @@ exports.startListener = io => {
             return socket.emit("authorized");
         }, 1000);
         console.log("🔥 Socket connected: ", socket.id);
-        socket.on("getUser", () => {
-            socket.emit("user", {
-                id: socket.user._id,
-                username: socket.user.username,
-                profileImage: socket.user.profileImage,
-            });
-        });
-        socket.on('handshake', (callback) => {
-            console.info('Handshake received from: ' + socket.id);
-
-            const reconnected = Object.values(this.users).includes(socket.id);
-
-            if (reconnected) {
-                console.info('This user has reconnected.');
-
-                const uid = this.GetUidFromSocketID(socket.id);
-                const users = Object.values(this.users);
-
-                if (uid) {
-                    console.info('Sending callback for reconnect ...');
-                    callback(uid, users);
-                    return;
-                }
-            }
-
-            const uid = v4();
-            this.users[uid] = socket.id;
-
-            const users = Object.values(this.users);
-            console.info('Sending callback ...');
-            callback(uid, users);
-
-            this.SendMessage(
-                'user_connected',
-                users.filter((id) => id !== socket.id),
-                users
-            );
+        socket.on("getUser", callback => {
+            callback(socket.user)
         });
         socket.on("disconnect", () => {
             console.info('Disconnect received from: ' + socket.id);
 
-            const uid = this.GetUidFromSocketID(socket.id);
+            // const uid = this.GetUidFromSocketID(socket.id);
 
-            if (uid) {
-                delete this.users[uid];
+            // if (uid) {
+            //     delete this.users[uid];
 
-                const users = Object.values(this.users);
+            //     const users = Object.values(this.users);
 
-                this.SendMessage('user_disconnected', users, socket.id);
-            }
+            //     this.SendMessage('user_disconnected', users, socket.id);
+            // }
         });
     });
 };

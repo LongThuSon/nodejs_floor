@@ -4,10 +4,10 @@ const User = db.users;
 // Create and Save a new User
 exports.create = (req, res) => {
     // Validate request
-    if (!req.body.name || !req.body.phone || !req.body.password || !req.body.keyRestaurant) {
-        res.status(400).send({ message: "Content user can not be empty!" });
-        return;
-    }
+    // if (!req.body.name || !req.body.phone || !req.body.password || !req.body.keyRestaurant) {
+    //     res.status(400).send({ message: "Content user can not be empty!" });
+    //     return;
+    // }
 
     // Create a User
     const user = new User({
