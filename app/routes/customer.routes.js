@@ -21,5 +21,8 @@ module.exports = app => {
     // Retrieve all customers
     router.get("/", customers.findAll);
 
+    // Delete all tables
+    router.delete("/", customers.deleteAll);
+
     app.use('/api/customers', router);
 };

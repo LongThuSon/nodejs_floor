@@ -10,17 +10,53 @@ exports.create = (req, res) => {
     // }
 
     // Create a Table
+
+    var totalChair
+    switch (req.body.type) {
+        case '1v1':
+            totalChair = 2
+            break;
+        case '2v2c':
+            totalChair = 4
+            break;
+        case '2v2r':
+            totalChair = 4
+            break;
+        case '3v3':
+            totalChair = 6
+            break;
+        case '6v6':
+            totalChair = 12
+            break;
+        case '7v7':
+            totalChair = 14
+            break;
+        case 'c6':
+            totalChair = 6
+            break;
+        case 'c8':
+            totalChair = 8
+            break;
+        case 'c14':
+            totalChair = 14
+            break;
+        default:
+            totalChair = 2
+    }
+
     const table = new Table({
         number: req.body.number,
         type: req.body.type,
         topPositon: req.body.topPositon,
         leftPositon: req.body.leftPositon,
-        keyRestaurant: req.body.keyRestaurant
+        keyRestaurant: req.body.keyRestaurant,
+        totalChair: totalChair
     });
 
     // Save Table in the database
     table
         .save(table)
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -35,6 +71,7 @@ exports.create = (req, res) => {
 // Retrieve all Tables from the database.
 exports.findAll = (req, res) => {
     Table.find({})
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -51,6 +88,7 @@ exports.findOne = (req, res) => {
     const id = req.params.id;
 
     Table.findById(id)
+        .exec()
         .then(data => {
             if (!data)
                 res.status(404).send({ message: "Not found Table with id " + id });
@@ -74,6 +112,7 @@ exports.update = (req, res) => {
     const id = req.params.id;
 
     Table.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+        .exec()
         .then(data => {
             if (!data) {
                 res.status(404).send({
@@ -93,6 +132,7 @@ exports.delete = (req, res) => {
     const id = req.params.id;
 
     Table.findByIdAndRemove(id)
+        .exec()
         .then(data => {
             if (!data) {
                 res.status(404).send({
@@ -114,6 +154,7 @@ exports.delete = (req, res) => {
 // Delete all Tables from the database.
 exports.deleteAll = (req, res) => {
     Table.deleteMany({})
+        .exec()
         .then(data => {
             res.send({
                 message: `${data.deletedCount} Tables were deleted successfully!`
@@ -132,6 +173,7 @@ exports.findAllType = (req, res) => {
     const type = req.query.type;
 
     Table.find({ type: type })
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -144,10 +186,11 @@ exports.findAllType = (req, res) => {
 };
 
 // Find all key restaurant Tables
-exports.findAllKey = (req, res) => {
+exports.findAllKey = async (req, res) => {
     const keyRestaurant = req.query.keyRestaurant;
 
     Table.find({ keyRestaurant: keyRestaurant })
+        .exec()
         .then(data => {
             res.send(data);
         })

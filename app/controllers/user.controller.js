@@ -20,6 +20,7 @@ exports.create = (req, res) => {
     // Save User in the database
     user
         .save(user)
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -34,6 +35,7 @@ exports.create = (req, res) => {
 // Retrieve all Users from the database.
 exports.findAll = (req, res) => {
     User.find({})
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -50,6 +52,7 @@ exports.findOne = (req, res) => {
     const id = req.params.id;
 
     User.findById(id)
+        .exec()
         .then(data => {
             if (!data)
                 res.status(404).send({ message: "Not found User with id " + id });

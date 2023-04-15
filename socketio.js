@@ -1,6 +1,8 @@
 const db = require("./app/models");
 const User = db.users;
+const Customer = db.customers;
 const _ = require("underscore");
+const schedule = require('node-schedule');
 
 module.exports = io => {
     // Delete socket to the namespace, befor authentication
@@ -49,6 +51,45 @@ module.exports = io => {
         socket.on("getUser", callback => {
             callback(socket.user)
         });
+        socket.on('userInUse', id => {
+            const deadline = Date().now() + 6000;
+            const job = schedule.scheduleJob('*/1 * * * *', () => { // run every 2 minutes
+                Customer.findById(id).exec()
+                    .then(res => {
+                        var currentPercent = res?.percent ?? 0
+                        if (Date().now() < deadline) {
+                            if (currentPercent < 80) {
+                                Customer.findByIdAndUpdate(id, { percent: currentPercent + 20 }, { useFindAndModify: false }).exec()
+                                .then(_ => {
+                                    console.log('current percent: ', currentPercent)
+                                    const payload = {
+                                        id: id,
+                                        data: { percent: currentPercent + 20 },
+                                    }
+                                    socket.emit("updatePercent", payload)
+                                })
+                                .catch(error => console.log(error))
+                            } else if (currentPercent === 80) {
+                                Customer.findByIdAndUpdate(id, { statusTable: 3, percent: 100 }, { useFindAndModify: false }).exec()
+                                .then(_ => {
+                                    const payload = {
+                                        id: id,
+                                        data: { 
+                                            percent: 100,
+                                            statusTable: 3,
+                                        },
+                                    }
+                                    socket.emit("updatePercent", payload)
+                                    job.cancel()
+                                })
+                                .catch(error => console.log(error))
+                            }
+                        } else {
+                            job.cancel()
+                        }
+                    })
+            });
+        })
         socket.on("disconnect", () => {
             console.info('Disconnect received from: ' + socket.id);
 

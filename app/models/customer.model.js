@@ -15,7 +15,7 @@ module.exports = mongoose => {
                 note: { type: String, default: "" },
                 keyRestaurant: String,
                 state: { type: Number, default: 0 },
-                statusTable: { type: Number, default: -1 },
+                statusTable: { type: Number, default: 0 },
                 percent: { type: Number, default: 0 },
             },
             { timestamps: true }

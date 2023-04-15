@@ -1,15 +1,15 @@
 const express = require("express");
 const cors = require("cors");
+const schedule = require('node-schedule');
 
 const app = express();
-
 const server = require('http').Server(app);
 
 const tableRoute = require("./app/routes/table.routes.js");
 const customerRoute = require("./app/routes/customer.routes.js");
 const userRoute = require("./app/routes/user.routes.js");
-
 const socketio = require("./socketio.js");
+const job = require('./schedule/job.js');
 
 app.use(cors());
 
@@ -49,6 +49,25 @@ const io = require("socket.io")(server, {
 });
 
 socketio(io);
+
+job(schedule, io);
+
+// const Customer = db.customers;
+// const job = schedule.scheduleJob('33 0 * * *', () => {
+//     const today = new Date();
+//     const startToday = today.setUTCHours(0, 0, 0);
+//     const endToday = today.setUTCHours(23, 59, 59);
+
+//     Customer.updateMany({
+//         $or: [{ status: 0 }, { status: 1 }],
+//         $and: [{
+//             dateOrder: {
+//                 $gte: startToday,
+//                 $lte: endToday
+//             }
+//         }]
+//     }, { $set: { status: 2 } }).exec();
+// });
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

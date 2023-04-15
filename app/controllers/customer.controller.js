@@ -1,5 +1,5 @@
 const db = require("../models");
-const { startOfDay, endOfDay } = require("date-fns");
+const Table = db.tables;
 const Customer = db.customers;
 
 // Create and Save a new Customer
@@ -11,16 +11,21 @@ exports.create = (req, res, socketIo) => {
     //     return;
     // }
 
+    var typeService = 0
+    if (req.body.timeOrder === '06:00PM' || req.body.timeOrder === '06:30PM' || req.body.timeOrder === '07:00PM' || req.body.timeOrder === '07:30PM' || req.body.timeOrder === '08:00PM' || req.body.timeOrder === '08:30PM') {
+        typeService = 1
+    }
+
     // Create a Customer
     const customer = new Customer({
         name: req.body.name,
         quantityBook: req.body.quantityBook,
         phone: req.body.phone,
         dateOrder: req.body.dateOrder,
-        typeService: req.body.typeService,
         timeOrder: req.body.timeOrder,
         note: req.body.note,
-        keyRestaurant: req.body.keyRestaurant
+        keyRestaurant: req.body.keyRestaurant,
+        typeService: typeService
     });
 
     // Save Customer in the database
@@ -40,6 +45,7 @@ exports.create = (req, res, socketIo) => {
 // Retrieve all Customers from the database.
 exports.findAll = (req, res) => {
     Customer.find({})
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -56,6 +62,7 @@ exports.findOne = (req, res) => {
     const id = req.params.id;
 
     Customer.findById(id)
+        .exec()
         .then(data => {
             if (!data)
                 res.status(404).send({ message: "Not found Customer with id " + id });
@@ -79,12 +86,16 @@ exports.update = (req, res) => {
     const id = req.params.id;
 
     Customer.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+        .exec()
         .then(data => {
+            console.log(res.body)
             if (!data) {
                 res.status(404).send({
                     message: `Cannot update Customer with id=${id}. Maybe Customer was not found!`
                 });
-            } else res.send({ message: "Customer was updated successfully." });
+            } else {
+                res.send(data)
+            };
         })
         .catch(err => {
             res.status(500).send({
@@ -98,6 +109,7 @@ exports.delete = (req, res) => {
     const id = req.params.id;
 
     Customer.findByIdAndRemove(id)
+        .exec()
         .then(data => {
             if (!data) {
                 res.status(404).send({
@@ -119,6 +131,7 @@ exports.delete = (req, res) => {
 // Delete all Customers from the database.
 exports.deleteAll = (req, res) => {
     Customer.deleteMany({})
+        .exec()
         .then(data => {
             res.send({
                 message: `${data.deletedCount} Customers were deleted successfully!`
@@ -137,6 +150,7 @@ exports.findAllHistory = (req, res) => {
     const phone = req.params.phone;
 
     Customer.find({ phone: phone })
+        .exec()
         .then(data => {
             res.send(data);
         })
@@ -149,31 +163,61 @@ exports.findAllHistory = (req, res) => {
 };
 
 // Find all key restaurant Customers
-exports.findAllService = (req, res) => {
+exports.findAllService = async (req, res) => {
     const keyRestaurant = req.query.keyRestaurant;
     const typeService = req.query.typeService;
     const dateOrder = req.query.dateOrder;
-    
-    const date = new Date(Number(dateOrder));
-    const startTime = date.setUTCHours(0,0,0,0);
-    const endTime = date.setUTCHours(23,59,59,999);
 
-    Customer.find({ 
-        keyRestaurant: keyRestaurant, 
-        typeService: typeService, 
-        dateOrder: { 
-            $gte: startTime,
-            $lte: endTime 
-        } 
-    })
+    const date = new Date(Number(dateOrder));
+    const startTime = date.setUTCHours(0, 0, 0);
+    const endTime = date.setUTCHours(23, 59, 59);
+
+    try {
+        // clear all tables
+        await Table.updateMany({ keyRestaurant: keyRestaurant }, { $set: { idCustomer: "" } }).exec();
+
+        // get all customers
+        const getAllCustomer = await Customer.find({
+            keyRestaurant: keyRestaurant,
+            typeService: typeService,
+            dateOrder: {
+                $gte: startTime,
+                $lte: endTime
+            }
+        }).exec()
+
+        console.log(getAllCustomer)
+
+        // update tables base customers
+        const mapCus = getAllCustomer.filter(cus => cus.idTable !== "" && (cus.status === 1 || cus.status === 2 || cus.status === 3))
+        mapCus.forEach(cus => {
+            Table.findByIdAndUpdate(cus.idTable, { idCustomer: cus._id }, { useFindAndModify: false }).exec()
+            console.log('cus: ', cus)
+        })
+
+        return res.send(getAllCustomer);
+    }
+    catch (err) {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving Customers."
+        });
+    }
+};
+
+// Delete all Customers from the database.
+exports.deleteAll = (req, res) => {
+    Customer.deleteMany({})
+        .exec()
         .then(data => {
-            res.send(data);
-            console.log(dateOrder)
+            res.send({
+                message: `${data.deletedCount} Customers were deleted successfully!`
+            });
         })
         .catch(err => {
             res.status(500).send({
                 message:
-                    err.message || "Some error occurred while retrieving Customers."
+                    err.message || "Some error occurred while removing all Customers."
             });
         });
 };
