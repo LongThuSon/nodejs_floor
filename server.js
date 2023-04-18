@@ -52,23 +52,6 @@ socketio(io);
 
 job(schedule, io);
 
-// const Customer = db.customers;
-// const job = schedule.scheduleJob('33 0 * * *', () => {
-//     const today = new Date();
-//     const startToday = today.setUTCHours(0, 0, 0);
-//     const endToday = today.setUTCHours(23, 59, 59);
-
-//     Customer.updateMany({
-//         $or: [{ status: 0 }, { status: 1 }],
-//         $and: [{
-//             dateOrder: {
-//                 $gte: startToday,
-//                 $lte: endToday
-//             }
-//         }]
-//     }, { $set: { status: 2 } }).exec();
-// });
-
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {

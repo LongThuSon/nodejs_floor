@@ -3,7 +3,7 @@ const Table = db.tables;
 const Customer = db.customers;
 
 // Create and Save a new Customer
-exports.create = (req, res, socketIo) => {
+exports.create = (req, res) => {
     // Validate request
     // if (!req.body.name || !req.body.quantityBook || !req.body.phone 
     //     || !req.body.typeService || !req.body.timeOrder || !req.body.keyRestaurant) {
@@ -33,6 +33,7 @@ exports.create = (req, res, socketIo) => {
         .save(customer)
         .then(data => {
             res.send(data);
+
         })
         .catch(err => {
             res.status(500).send({
@@ -88,7 +89,6 @@ exports.update = (req, res) => {
     Customer.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
         .exec()
         .then(data => {
-            console.log(res.body)
             if (!data) {
                 res.status(404).send({
                     message: `Cannot update Customer with id=${id}. Maybe Customer was not found!`
@@ -168,9 +168,12 @@ exports.findAllService = async (req, res) => {
     const typeService = req.query.typeService;
     const dateOrder = req.query.dateOrder;
 
+    const today = new Date();
+    const startToday = today.setUTCHours(0, 0, 0, 0);
+
     const date = new Date(Number(dateOrder));
-    const startTime = date.setUTCHours(0, 0, 0);
-    const endTime = date.setUTCHours(23, 59, 59);
+    const startTime = date.setUTCHours(0, 0, 0, 0);
+    const endTime = date.setUTCHours(23, 59, 59, 999);
 
     try {
         // clear all tables
@@ -186,21 +189,21 @@ exports.findAllService = async (req, res) => {
             }
         }).exec()
 
-        console.log(getAllCustomer)
-
         // update tables base customers
-        const mapCus = getAllCustomer.filter(cus => cus.idTable !== "" && (cus.status === 1 || cus.status === 2 || cus.status === 3))
-        mapCus.forEach(cus => {
-            Table.findByIdAndUpdate(cus.idTable, { idCustomer: cus._id }, { useFindAndModify: false }).exec()
-            console.log('cus: ', cus)
-        })
+        if (date >= startToday) {
+            const mapCus = getAllCustomer.filter(cus => cus.idTable !== "" && (cus.status === 1 || cus.status === 2 || cus.status === 3))
+            mapCus.forEach(cus => {
+                Table.findByIdAndUpdate(cus.idTable, { idCustomer: cus._id }, { useFindAndModify: false }).exec()
+                console.log('cus: ', cus)
+            })
+        }
 
         return res.send(getAllCustomer);
     }
     catch (err) {
         res.status(500).send({
             message:
-                err.message || "Some error occurred while retrieving Customers."
+                err.message || "Find all service Customers"
         });
     }
 };

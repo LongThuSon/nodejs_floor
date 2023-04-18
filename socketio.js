@@ -20,7 +20,7 @@ module.exports = io => {
         socket.on("authenticate", async auth => {
             const { phone, password, keyRestaurant } = auth;
             // Find user
-            const user = await User.findOne({ phone: phone }).exec();
+            const user = await User.findOne({ phone: phone, keyRestaurant: keyRestaurant }).exec();
             if (user === null) {
                 console.log(`authenticate: user === null: phone: ${phone}`);
                 socket.emit("error", { message: "No user found" });
@@ -52,16 +52,17 @@ module.exports = io => {
             callback(socket.user)
         });
         socket.on('userInUse', id => {
-            const deadline = Date().now() + 6000;
-            const job = schedule.scheduleJob('*/1 * * * *', () => { // run every 2 minutes
+            var now = 0;
+            const deadline = 6000;
+            const job = schedule.scheduleJob('*/2 * * * *', () => { // run every 2 minutes
                 Customer.findById(id).exec()
                     .then(res => {
                         var currentPercent = res?.percent ?? 0
-                        if (Date().now() < deadline) {
+                        if (now < deadline) {
+                            now = now + 1000
                             if (currentPercent < 80) {
                                 Customer.findByIdAndUpdate(id, { percent: currentPercent + 20 }, { useFindAndModify: false }).exec()
                                 .then(_ => {
-                                    console.log('current percent: ', currentPercent)
                                     const payload = {
                                         id: id,
                                         data: { percent: currentPercent + 20 },
@@ -89,7 +90,38 @@ module.exports = io => {
                         }
                     })
             });
-        })
+        });
+        socket.on("handleClash", payload => {
+            const keyRestaurant = payload.keyRestaurant;
+            const typeService = payload.typeService;
+            const dateOrder = payload.dateOrder;
+            const idTable = payload.idTable;
+
+            const date = new Date(Number(dateOrder));
+            const startTime = date.setUTCHours(0, 0, 0, 0);
+            const endTime = date.setUTCHours(23, 59, 59, 999);
+
+            Customer
+                .updateMany({
+                    keyRestaurant: keyRestaurant,
+                    typeService: typeService,
+                    dateOrder: {
+                        $gte: startTime,
+                        $lte: endTime
+                    },
+                    idTable: idTable,
+                }, { $set: { statusTable: 4, } })
+                .exec()
+                .then(_ => {
+                    socket.emit('updateClash', idTable)
+                })
+                .catch(err => {
+                    res.status(500).send({
+                        message:
+                            err.message || "Update crash customer error"
+                    });
+                });
+        });
         socket.on("disconnect", () => {
             console.info('Disconnect received from: ' + socket.id);
 

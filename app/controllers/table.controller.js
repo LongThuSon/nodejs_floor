@@ -56,7 +56,6 @@ exports.create = (req, res) => {
     // Save Table in the database
     table
         .save(table)
-        .exec()
         .then(data => {
             res.send(data);
         })

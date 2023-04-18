@@ -1,13 +1,17 @@
+var { validationResult } = require('express-validator');
 const db = require("../models");
 const User = db.users;
 
 // Create and Save a new User
-exports.create = (req, res) => {
+exports.create = (req, res, next) => {
     // Validate request
-    // if (!req.body.name || !req.body.phone || !req.body.password || !req.body.keyRestaurant) {
-    //     res.status(400).send({ message: "Content user can not be empty!" });
-    //     return;
-    // }
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        console.log(errors.array())
+        res.status(422).json({ errors: errors.array() });
+        return;
+    }
 
     // Create a User
     const user = new User({
@@ -17,19 +21,25 @@ exports.create = (req, res) => {
         keyRestaurant: req.body.keyRestaurant,
     });
 
-    // Save User in the database
-    user
-        .save(user)
+    User.find({ phone: req.body.phone, keyRestaurant: req.body.keyRestaurant })
         .exec()
         .then(data => {
-            res.send(data);
+            if (data.length === 0) {
+                // Save User in the database
+                user
+                    .save(user)
+                    .then(data => {
+                        res.send(data);
+                    })
+                    .catch(next);
+            } else {
+                // update user in the database
+                data[0].name = req.body.name;
+                data[0].password = req.body.password;
+                data[0].save()
+            }
         })
-        .catch(err => {
-            res.status(500).send({
-                message:
-                    err.message || "Some error occurred while creating the User."
-            });
-        });
+        .catch(next)
 };
 
 // Retrieve all Users from the database.
